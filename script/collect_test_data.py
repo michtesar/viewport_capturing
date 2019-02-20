@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from math import radians, degrees, atan, sin, tan, acos
+from math import radians, degrees, atan, sin, tan, acos, sqrt, cos, asin
 from geometry_msgs.msg import PoseStamped
 from tf.transformations import quaternion_from_euler
 from rospy import init_node, sleep, loginfo
@@ -20,7 +20,7 @@ def euler_to_quaternion(x, y, z):
         list(float) -- ROS compatible quaternion X, Y, Z and W
     """
     euler = [radians(x), radians(y), radians(z)]
-    return quaternion_from_euler(euler[0], euler[1]+90, euler[2])
+    return quaternion_from_euler(euler[0], euler[1], euler[2])
 
 def construct_pose(position, quaternion, frame_id="/world"):
     """Construct a PoseStamped message based on given
@@ -47,37 +47,41 @@ def construct_pose(position, quaternion, frame_id="/world"):
     return pose
 
 def compute_camera_position(angles, planar, dist, d):
-    """Computes a camera position for a proper
-    viewport for robot.
-    
-    Arguments:
-        angles {list(float)} -- Vertical camera angles (angles)
-        planar {list(float)} -- Planar camera positoins (left, center, right)
-        dist {float} -- Fixed distance from the scene up and down (in axis Y)
-        d {float} -- Distance from baselink to scene center
-    
-    Returns:
-        list (PoseStamped) -- List of PoseStamped poses for robot in '/world' frame
-    """
-    camera_poses = []
-    x_angle = 0
-    for i in angles:
-        x = dist * sin(radians(i))
-        z = (x) / tan(radians(i))
-        for j in planar:
-            y = j
-            if j != 0:
-                z_angle = -(degrees(atan(dist / j)))
-            else:
-                z_angle = 0
-            euler = [x_angle, i, z_angle]
-            quaternion = euler_to_quaternion(x=euler[0], y=euler[1], z=euler[2])
-            loginfo("Euler: {0:.2f}, {1:.2f}, {2:.2f}".format(
-                euler[0], euler[1], euler[2]
-            ))
-            position = [d-x, y, z]
-            camera_poses.append(construct_pose(position, quaternion))
-    return camera_poses
+   """Computes a camera position for a proper
+   viewport for robot.
+
+   Arguments:
+       angles {list(float)} -- Vertical camera angles (angles)
+       planar {list(float)} -- Planar camera positoins (left, center, right)
+       dist {float} -- Fixed distance from the scene up and down (in axis Y)
+       d {float} -- Distance from baselink to scene center
+
+   Returns:
+       list (PoseStamped) -- List of PoseStamped poses for robot in '/world' frame
+   """
+   camera_poses = []
+   x_angle = 0
+   for i in angles:
+       i = 90 - i
+       x = dist * cos(radians(i))
+       z = dist * sin(radians(i))
+       for j in planar:
+           y = j
+           if j != 0:
+               x2 = sqrt(x**2 + y**2)
+               z = x2 / tan(radians(i))
+               adjusted_dist = sqrt(z**2+x2**2)
+               z_angle = -degrees(asin(x/x2))
+           else:
+               z_angle = 0
+           euler = [x_angle, 180-i, -z_angle]
+           quaternion = euler_to_quaternion(x=euler[0], y=euler[1], z=euler[2])
+           loginfo("Euler: {0:.2f}, {1:.2f} and {2:.2f}".format(
+               x_angle, i, euler[2]
+           ))
+           position = [d-x, y, z]
+           camera_poses.append(construct_pose(position, quaternion))
+   return camera_poses
 
 if __name__ == "__main__":
     # Connect and initialize Capek robot    
@@ -91,8 +95,8 @@ if __name__ == "__main__":
 
     # Compute robot poses based on camera settings    
     camera_poses = compute_camera_position(
-        angles=[40.0, 50.0, 50.0, 70.0],
-        planar=[-0.2, 0.0, +0.2],
+        angles=[40.0, 50.0, 60.0, 70.0],
+        planar=[-0.3, 0.0, +0.3],
         dist=0.8,
         d=1.0
     )
