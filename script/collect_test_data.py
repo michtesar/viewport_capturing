@@ -63,14 +63,14 @@ def compute_camera_position(angles, planar, dist, d):
    x_angle = 0
    for i in angles:
        i = 90 - i
-       x = dist * cos(radians(i))
-       z = dist * sin(radians(i))
+       x = dist * sin(radians(i))
+       z = dist * cos(radians(i))
        for j in planar:
            y = j
            if j != 0:
                x2 = sqrt(x**2 + y**2)
-               z = x2 / tan(radians(i))
-               adjusted_dist = sqrt(z**2+x2**2)
+               #z = x2 / tan(radians(i))
+               #adjusted_dist = sqrt(z**2+x2**2)
                z_angle = -degrees(asin(x/x2))
            else:
                z_angle = 0
@@ -97,8 +97,8 @@ if __name__ == "__main__":
     camera_poses = compute_camera_position(
         angles=[40.0, 50.0, 60.0, 70.0],
         planar=[-0.3, 0.0, +0.3],
-        dist=0.8,
-        d=1.0
+        dist=0.6,
+        d=1.1
     )
 
     crc.set_speed(0.5)
