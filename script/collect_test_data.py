@@ -67,13 +67,15 @@ def compute_camera_position(angles, planar, dist, d):
        z = dist * cos(radians(i))
        for j in planar:
            y = j
-           if j != 0:
+           if j < 0:
                x2 = sqrt(x**2 + y**2)
-               #z = x2 / tan(radians(i))
-               #adjusted_dist = sqrt(z**2+x2**2)
-               z_angle = -degrees(asin(x/x2))
+               z_angle = -90+degrees(asin(x/x2))
+           elif j > 0:
+               x2 = sqrt(x**2 + y**2)
+               z_angle = 90-degrees(asin(x/x2))
            else:
                z_angle = 0
+           loginfo("Z angle raw rads {}".format(asin(x/x2)))
            euler = [x_angle, 180-i, -z_angle]
            quaternion = euler_to_quaternion(x=euler[0], y=euler[1], z=euler[2])
            loginfo("Euler: {0:.2f}, {1:.2f} and {2:.2f}".format(
