@@ -2,9 +2,12 @@
 from math import radians, degrees, atan, sin, tan, acos, sqrt, cos, asin
 from geometry_msgs.msg import PoseStamped
 from tf.transformations import quaternion_from_euler
-from rospy import init_node, sleep, loginfo
+from rospy import init_node, sleep, loginfo, Subscriber, Rate
 from capek_pycommander.capek_robot import CapekRobotCommander
-
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge, CvBridgeError
+import cv2
+import rospy
 
 def euler_to_quaternion(x, y, z):
     """Enter Euler values in degrees X, Y, Z order 
@@ -75,12 +78,8 @@ def compute_camera_position(angles, planar, dist, d):
                z_angle = 90-degrees(asin(x/x2))
            else:
                z_angle = 0
-           loginfo("Z angle raw rads {}".format(asin(x/x2)))
            euler = [x_angle, 180-i, -z_angle]
            quaternion = euler_to_quaternion(x=euler[0], y=euler[1], z=euler[2])
-           loginfo("Euler: {0:.2f}, {1:.2f} and {2:.2f}".format(
-               x_angle, i, euler[2]
-           ))
            position = [d-x, y, z]
            camera_poses.append(construct_pose(position, quaternion))
    return camera_poses
@@ -97,31 +96,24 @@ if __name__ == "__main__":
 
     # Compute robot poses based on camera settings    
     camera_poses = compute_camera_position(
-        angles=[40.0, 50.0, 60.0, 70.0],
+        angles=[40.0, 45.0, 50.0, 55.0],
         planar=[-0.3, 0.0, +0.3],
-        dist=0.6,
+        dist=0.7,
         d=1.1
     )
 
+    # Set smaller speed
     crc.set_speed(0.5)
+
+    bridge= CvBridge()
     # Go over all poses and execute one by one
     for index, position in enumerate(camera_poses):
         loginfo("Pose number {}".format(index+1))
-        loginfo("Position {}, {}, {}".format(
-            position.pose.position.x,
-            position.pose.position.y,
-            position.pose.position.z))
-        # FIXME: This is temporarily solution. 
-        # We divide a Z cooridnate by 2 because 
-        # robot cannot reach 1 m high.
-        #position.pose.position.z /=  2
 
         # Set robot pose and execute
         crc.group.set_pose_target(position.pose)
         crc.group.go(wait=True)
 
-        # TODO: We will not wait anymore. We connect
-        # to camera topic and read rectified camera
-        # frame which is already intrincisticaly
-        # calibrated.
-        raw_input("Press enter to te next position")
+        IMAGE = rospy.wait_for_message("/pylon_camera_node/image_raw", Image)
+        IMAGE = bridge.imgmsg_to_cv2(IMAGE, "bgr8")
+        cv2.imwrite("img_{}-{}.png".format(index % 3, index), IMAGE)
