@@ -105,15 +105,19 @@ if __name__ == "__main__":
     # Set smaller speed
     crc.set_speed(0.5)
 
+    SCENE = 0
+
     bridge= CvBridge()
-    # Go over all poses and execute one by one
-    for index, position in enumerate(camera_poses):
-        loginfo("Pose number {}".format(index+1))
+    for i in range(200):
+        # Go over all poses and execute one by one
+        for index, position in enumerate(camera_poses):
+            loginfo("Pose number {}".format(index+1))
 
-        # Set robot pose and execute
-        crc.group.set_pose_target(position.pose)
-        crc.group.go(wait=True)
+            # Set robot pose and execute
+            crc.group.set_pose_target(position.pose)
+            crc.group.go(wait=True)
 
-        IMAGE = rospy.wait_for_message("/pylon_camera_node/image_raw", Image)
-        IMAGE = bridge.imgmsg_to_cv2(IMAGE, "bgr8")
-        cv2.imwrite("img_{}-{}.png".format(index / 3, index), IMAGE)
+            IMAGE = rospy.wait_for_message("/pylon_camera_node/image_raw", Image)
+            IMAGE = bridge.imgmsg_to_cv2(IMAGE, "bgr8")
+            cv2.imwrite("scn_{}_img_{}-{}.png".format(SCENE, index / 3, index), IMAGE)
+        SCENE += 1
