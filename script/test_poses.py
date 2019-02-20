@@ -14,6 +14,7 @@ rospy.init_node("test_poses")
 crc = CapekRobotCommander("r1")
 crc.group.set_planner_id("RRTConnectkConfigDefault")
 crc.group.set_pose_reference_frame("r1_link_0")
+crc.set_speed(0.4)
 
 pose = Pose()
 
@@ -45,17 +46,15 @@ while not rospy.is_shutdown():
 	elif choice == 4:
 		crc.move_l_position()
 	elif choice == 5:
+		pos_x = input("Position x: ")
+		pos_y = input("Position y: ")
+		pos_z = input("Position z: ")
 		x = input("Euler x: ")
-		y = input("Euler y: ") + 90
+		y = input("Euler y: ")
 		z = input("Euler z: ")
 		euler = [math.radians(x), math.radians(y), math.radians(z)]
 		from tf.transformations import quaternion_from_euler
 		quaternion = quaternion_from_euler(euler[0], euler[1], euler[2])
-		
-		pos_x = 0.5
-		pos_y = 0.0
-		pos_z = 0.3
-
 		qua_x = quaternion[0]
 		qua_y = quaternion[1]
 		qua_z = quaternion[2]
