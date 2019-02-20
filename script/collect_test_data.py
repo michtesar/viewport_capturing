@@ -116,4 +116,4 @@ if __name__ == "__main__":
 
         IMAGE = rospy.wait_for_message("/pylon_camera_node/image_raw", Image)
         IMAGE = bridge.imgmsg_to_cv2(IMAGE, "bgr8")
-        cv2.imwrite("img_{}-{}.png".format(index % 3, index), IMAGE)
+        cv2.imwrite("img_{}-{}.png".format(index / 3, index), IMAGE)
