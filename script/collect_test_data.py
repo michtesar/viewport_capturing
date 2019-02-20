@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from math import radians, degrees, atan, sin, tan
+from math import radians, degrees, atan, sin, tan, acos
 from geometry_msgs.msg import PoseStamped
 from tf.transformations import quaternion_from_euler
 from rospy import init_node, sleep, loginfo
@@ -19,8 +19,8 @@ def euler_to_quaternion(x, y, z):
     Returns:
         list(float) -- ROS compatible quaternion X, Y, Z and W
     """
-    euler = [radians(x), radians(y)+90, radians(z)]
-    return quaternion_from_euler(euler[0], euler[1], euler[2])
+    euler = [radians(x), radians(y), radians(z)]
+    return quaternion_from_euler(euler[0], euler[1]+90, euler[2])
 
 def construct_pose(position, quaternion, frame_id="/world"):
     """Construct a PoseStamped message based on given
@@ -67,11 +67,14 @@ def compute_camera_position(angles, planar, dist, d):
         for j in planar:
             y = j
             if j != 0:
-                z_angle = (degrees(atan(dist / j)))
+                z_angle = -(degrees(atan(dist / j)))
             else:
                 z_angle = 0
             euler = [x_angle, i, z_angle]
             quaternion = euler_to_quaternion(x=euler[0], y=euler[1], z=euler[2])
+            loginfo("Euler: {0:.2f}, {1:.2f}, {2:.2f}".format(
+                euler[0], euler[1], euler[2]
+            ))
             position = [d-x, y, z]
             camera_poses.append(construct_pose(position, quaternion))
     return camera_poses
@@ -89,11 +92,12 @@ if __name__ == "__main__":
     # Compute robot poses based on camera settings    
     camera_poses = compute_camera_position(
         angles=[40.0, 50.0, 50.0, 70.0],
-        planar=[-0.3, 0.0, +0.3],
-        dist=4.24/3,
-        d=0.5*3
+        planar=[-0.2, 0.0, +0.2],
+        dist=0.8,
+        d=1.0
     )
 
+    crc.set_speed(0.5)
     # Go over all poses and execute one by one
     for index, position in enumerate(camera_poses):
         loginfo("Pose number {}".format(index+1))
@@ -104,7 +108,7 @@ if __name__ == "__main__":
         # FIXME: This is temporarily solution. 
         # We divide a Z cooridnate by 2 because 
         # robot cannot reach 1 m high.
-        position.pose.position.z /=  2
+        #position.pose.position.z /=  2
 
         # Set robot pose and execute
         crc.group.set_pose_target(position.pose)
@@ -114,4 +118,4 @@ if __name__ == "__main__":
         # to camera topic and read rectified camera
         # frame which is already intrincisticaly
         # calibrated.
-        sleep(2)
+        raw_input("Press enter to te next position")
