@@ -96,14 +96,14 @@ if __name__ == "__main__":
 
     # Compute robot poses based on camera settings    
     camera_poses = compute_camera_position(
-        angles=[40.0, 45.0, 50.0, 55.0],
-        planar=[-0.3, 0.0, +0.3],
-        dist=0.7,
+        angles=[30.0, 40.0, 50.0],
+        planar=[-0.2, 0.0, +0.2],
+        dist=0.525,
         d=1.1
     )
 
     # Set smaller speed
-    crc.set_speed(0.5)
+    crc.set_speed(0.75)
 
     SCENE = 0
 
@@ -120,4 +120,8 @@ if __name__ == "__main__":
             IMAGE = rospy.wait_for_message("/pylon_camera_node/image_raw", Image)
             IMAGE = bridge.imgmsg_to_cv2(IMAGE, "bgr8")
             cv2.imwrite("scn_{}_img_{}-{}.png".format(SCENE, index / 3, index), IMAGE)
+
+            #crc.move_l_position()
+
         SCENE += 1
+        raw_input("New scene configuration. Press ENTER to continue...")
