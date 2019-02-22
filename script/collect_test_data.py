@@ -103,12 +103,13 @@ if __name__ == "__main__":
     )
 
     # Set smaller speed
-    crc.set_speed(0.75)
+    crc.set_speed(1.0)
 
-    SCENE = 0
+    SCENE = 124
 
     bridge= CvBridge()
     for i in range(200):
+        crc.move_l_position()
         # Go over all poses and execute one by one
         for index, position in enumerate(camera_poses):
             loginfo("Pose number {}".format(index+1))
@@ -124,4 +125,5 @@ if __name__ == "__main__":
             #crc.move_l_position()
 
         SCENE += 1
+        loginfo("Scene number {0} which is {1:.2f}%".format(SCENE, (SCENE/200.0)*100))
         raw_input("New scene configuration. Press ENTER to continue...")
