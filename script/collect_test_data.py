@@ -7,7 +7,10 @@ from capek_pycommander.capek_robot import CapekRobotCommander
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
+import numpy
 import rospy
+
+SAVE = True
 
 def euler_to_quaternion(x, y, z):
     """Enter Euler values in degrees X, Y, Z order 
@@ -81,6 +84,7 @@ def compute_camera_position(angles, planar, dist, d):
            euler = [x_angle, 180-i, -z_angle]
            quaternion = euler_to_quaternion(x=euler[0], y=euler[1], z=euler[2])
            position = [d-x, y, z]
+           print(position)
            camera_poses.append(construct_pose(position, quaternion))
    return camera_poses
 
@@ -101,11 +105,14 @@ if __name__ == "__main__":
         dist=0.525,
         d=1.1
     )
+    
+    if SAVE:
+    	numpy.save("camera_poses.npy", camera_poses)
 
     # Set smaller speed
     crc.set_speed(1.0)
 
-    SCENE = 124
+    SCENE = 132
 
     bridge= CvBridge()
     for i in range(200):
